@@ -6,3 +6,5 @@ __pycache__
 /outputs
 stderr.log
 stdout.log
+Account.json
+*.json
