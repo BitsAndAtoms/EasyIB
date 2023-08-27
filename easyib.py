@@ -352,13 +352,16 @@ class REST:
 
 
 
-def is_ibkr_server_running(target_port, target_cmd_substring):
+def is_ibkr_server_running(target_port, target_cmd_substring, kill=False):
     for conn in psutil.net_connections(kind='inet'):
         if conn.laddr.port == target_port:
             pid = conn.pid
             try:
                 process = psutil.Process(pid)
                 if target_cmd_substring in ' '.join(process.cmdline()):
+                    if kill:
+                        process.terminate()
+                        return False
                     return True
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
@@ -373,34 +376,33 @@ def execute_script():
     command =  "bin/run.sh root/conf.yaml" 
     path_to_directory = script_path + "/clientportal.gw/"
     print("Executing command: " + command)
-    command_to_run = f"cd {path_to_directory}; {command}"
-    process = subprocess.Popen(["gnome-terminal", "--", "bash", "-c", f"cd {path_to_directory}; {command}; exec bash"])
-    #process = subprocess.Popen(command_to_run, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-
-
-    if process.returncode == 0:
-        print("Execution successful.")
-    else:
-        print("An error occurred.")
+    command_to_run = f"cd {path_to_directory} && {command}"
+    with open("stdout.log", 'a') as f_stdout, open("stderr.log", 'a') as f_stderr:
+        subprocess.Popen(command_to_run, shell=True, stdout=f_stdout, stderr=f_stderr, executable="/usr/bin/zsh")
 
 
 if __name__ == "__main__":
+    restart_ibkr_server = True
     sleep_interval = 60 * 5
     target_port = 5000
     target_cmd_substring = "ibgroup.web.core.clientportal.gw.GatewayStart"
     # Find the process running on port 5000
+    if restart_ibkr_server: # try to kill the process
+        is_ibkr_server_running(target_port, target_cmd_substring, kill=True)
+        if is_ibkr_server_running(target_port, target_cmd_substring):
+            print("IBKR server is still running. Please kill the process manually.")
+            exit()
     if is_ibkr_server_running(target_port, target_cmd_substring):
         print("IBKR server is already running.")
     else:
-        user_input = input("Do you want to execute the script? (yes/no): ").strip().lower()
-        print("You entered:", user_input)
-        if user_input == 'yes':
+        # user_input = input("Do you want to execute the script? (yes/no): ").strip().lower()
+        # print("You entered:", user_input)
+        #if user_input == 'yes':
            execute_script()
            user_input = input("Have you logged in? (yes/no): ").strip().lower()
            print("You entered:", user_input)
-        else:
-           print("Execution canceled.")
+        #else:
+        #  print("Execution canceled.")
   
     api = REST()
     while True:
