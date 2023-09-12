@@ -21,6 +21,7 @@ if __name__ == "__main__":
     while True: 
         try:
          logging.info(api.get_portfolio())
+         logging.info(api.get_accounts())
          time.sleep(10)
         except Exception as e:
             logging.error(f"An error occurred in the trading logic: {e}")
