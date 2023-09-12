@@ -2,7 +2,8 @@ import psutil
 import logging
 import os
 import subprocess
-
+import time
+from Utils.Utils import Utils
 logging.basicConfig(level=logging.INFO)
 
 class IBKRServerManager:
@@ -39,7 +40,14 @@ class IBKRServerManager:
 
     def manage_server(self, restart=False):
         if restart:
+            restart_config=Utils().read_json_data("Config.json")["start_server"]
             self.terminate_server()
+            # Retry checking for up to approximately 10 seconds
+            for _ in range(restart_config["max_retries"]):
+                # Sleep for a bit more than 3 seconds
+                if not self.is_server_running(): 
+                    break
+                time.sleep(restart_config["sleep_interval"]) 
             if self.is_server_running():
                 logging.error("IBKR server is still running. Please kill the process manually.")
                 exit(1)

@@ -21,7 +21,7 @@ class REST:
             raise
         return response.json()
 
-    def get_accounts(self) -> list:
+    def get_accounts(self) -> dict:
         return self._send_request('GET', 'portfolio/accounts')
 
     def switch_account(self, accountId: str) -> dict:
@@ -33,10 +33,10 @@ class REST:
     def get_netvalue(self) -> float:
         return self._send_request('GET', f'portfolio/{self.id}/ledger')["USD"]["netliquidationvalue"]
 
-    def get_conid(self, symbol: str, instrument_filters: dict = None, contract_filters: dict = {"isUS": True}) -> int:
+    def get_conid(self, symbol: str, instrument_filters: dict = {}, contract_filters: dict = {"isUS": True}) -> int:
         response = self._send_request('GET', 'trsrv/stocks', params={"symbols": symbol})
 
-        dic = response.json()
+        dic = response
 
         if instrument_filters or contract_filters:
 
@@ -48,7 +48,7 @@ class REST:
                             [x.get(key) == val for key, val in filters.items()],
                         )
                     )
-                    return len(positives) == len(filters)
+                    return [len(positives) == len(filters)]
 
                 if instrument_filters:
                     valid = apply_filters(instrument, instrument_filters)
@@ -83,7 +83,7 @@ class REST:
     def get_order(self, orderId: str) -> dict:
         return self._send_request('GET', f'iserver/account/order/status/{orderId}')
 
-    def get_live_orders(self, filters: list = None) -> dict:
+    def get_live_orders(self, filters: list = [None]) -> dict:
         return self._send_request('GET', 'iserver/account/orders', params={"filters": filters or []})
 
     def cancel_order(self, orderId: str) -> dict:
@@ -107,7 +107,7 @@ class REST:
     def log_out(self) -> None:
         self._send_request('POST', 'logout')
 
-    def get_bars(self, symbol: str, period="1w", bar="1d", outsideRth=False, conid: str or int = "default") -> dict:
+    def get_bars(self, symbol: str, period="1w", bar="1d", outsideRth=False, conid="default") -> dict:
         if conid == "default":
             conid = self.get_conid(symbol)
         
@@ -174,7 +174,7 @@ class REST:
     def get_scanner_params(self, scanner_id: str) -> dict:
         return self._send_request('GET', f'scanner/params/{scanner_id}')
 
-    def run_scanner(self, scanner_id: str, params: dict) -> dict:
+    def run_scanner_plain(self, scanner_id: str, params: dict) -> dict:
         return self._send_request('POST', f'scanner/run/{scanner_id}', json=params)
 
     # Market Data Methods
