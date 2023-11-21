@@ -3,7 +3,14 @@ import time
 import logging
 from portfolio import Portfolio  # The Portfolio class we developed
 
+import threading
 
+# Existing code here...
+
+def start_trading_logic(api):
+    thread = threading.Thread(target=trading_logic, args=(api,))
+    thread.daemon = True  # Set as a daemon thread so it exits when the main program exits
+    thread.start()
 
 def trading_logic(api):
     try:
